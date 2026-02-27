@@ -498,102 +498,186 @@ export default function UnicornFurnitureApp() {
   );
 
   // ═══════════════════════════════════════════════════════════════════
-  // STORE MODE — Luxury
+  // STORE MODE — Premium Design (from unicorn-furniture.jsx)
   // ═══════════════════════════════════════════════════════════════════
+
+  const discount = selectedProduct ? (selectedProduct.old_price_aed > selectedProduct.price_aed ? Math.round((1 - selectedProduct.price_aed / selectedProduct.old_price_aed) * 100) : null) : null;
+  const related = selectedProduct ? products.filter(p => p.category === selectedProduct.category && p.id !== selectedProduct.id).slice(0, 3) : [];
+
   return (
-    <div ref={scrollRef} style={{ minHeight: "100vh", background: "#f7f5f0", color: "#111", fontFamily: "'Outfit',sans-serif", overflowY: "auto", height: "100vh" }} data-scroll-container>
+    <div ref={scrollRef} data-scroll-container style={{
+      fontFamily: "'DM Sans', sans-serif", background: '#fcfaf7', color: '#1a1a1a',
+      minHeight: '100vh', overflow: 'auto', height: '100vh',
+    }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Outfit:wght@200;300;400;500;600&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap');
         *{box-sizing:border-box;margin:0;padding:0}
-        @keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
-        @keyframes heroReveal{from{opacity:0;transform:scale(1.01)}to{opacity:1;transform:scale(1)}}
-        @keyframes toast{from{transform:translateY(80px) scale(.9);opacity:0}to{transform:translateY(0) scale(1);opacity:1}}
-        @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
-        button{cursor:pointer;transition:all .25s ease}
+        button{cursor:pointer;transition:all .3s}
         a{text-decoration:none;color:inherit}
-        .pc:hover .pc-img{transform:scale(1.06)}
-        .pc:hover .pc-overlay{opacity:1}
-        .pc:hover .pc-line{width:100%}
-        .nl::after{content:'';position:absolute;bottom:-2px;left:0;width:0;height:1px;background:#111;transition:width .3s}
-        .nl:hover::after{width:100%}
+        @keyframes toast{from{transform:translateY(80px) scale(.9);opacity:0}to{transform:translateY(0) scale(1);opacity:1}}
       `}</style>
 
-      {/* NAV */}
-      <nav style={{
-        position: "sticky", top: 0, zIndex: 100, padding: "18px 48px",
-        background: scrolled ? "rgba(247,245,240,.92)" : "transparent",
-        backdropFilter: scrolled ? "blur(20px) saturate(1.4)" : "none",
-        borderBottom: scrolled ? "1px solid rgba(0,0,0,.06)" : "none",
-        display: "flex", justifyContent: "space-between", alignItems: "center",
-        transition: "all .4s cubic-bezier(.22,1,.36,1)",
+      {/* ── TOP BAR ── */}
+      <div style={{
+        background: '#1a1a1a', color: '#c9b99a', textAlign: 'center',
+        padding: '8px 20px', fontSize: 12, letterSpacing: 2,
+        fontFamily: "'DM Sans', sans-serif", textTransform: 'uppercase',
       }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 14, cursor: "pointer" }} onClick={() => navigate("home")}>
-          <div style={{ width: 32, height: 32, background: "#111", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <span style={{ color: "#f7f5f0", fontSize: 10, fontWeight: 600, letterSpacing: 2 }}>U</span>
-          </div>
-          <h1 style={{ fontFamily: "'DM Serif Display',serif", fontSize: 19, fontWeight: 400, letterSpacing: .5 }}>Unicorn</h1>
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 32 }}>
-          <button className="nl" onClick={() => navigate("shop")} style={{ background: "none", border: "none", fontSize: 11, color: "#555", letterSpacing: 1.8, textTransform: "uppercase", fontWeight: 400, position: "relative" }}>Collection</button>
-          <button className="nl" onClick={() => navigate("cart")} style={{ background: "none", border: "none", fontSize: 11, color: "#555", letterSpacing: 1.8, textTransform: "uppercase", fontWeight: 400, position: "relative" }}>
-            Bag{cartCount > 0 && <span style={{ position: "absolute", top: -4, right: -16, width: 16, height: 16, background: "#111", color: "#f7f5f0", fontSize: 9, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 500 }}>{cartCount}</span>}
-          </button>
-        </div>
-      </nav>
+        Free delivery across Dubai · Premium Furniture Collection
+      </div>
 
-      {/* HOME */}
-      {view === "home" && (
-        <div style={{ animation: "heroReveal .8s cubic-bezier(.22,1,.36,1)" }}>
-          {/* Hero */}
-          <section style={{ position: "relative", padding: "120px 48px 100px", maxWidth: 1000, margin: "0 auto" }}>
-            <div style={{ position: "absolute", top: 40, right: 48, fontSize: 10, letterSpacing: 3, color: "#ccc", textTransform: "uppercase", writingMode: "vertical-rl" }}>Est. Dubai</div>
-            <p style={{ fontSize: 11, letterSpacing: 5, textTransform: "uppercase", color: "#b8a080", marginBottom: 24, fontWeight: 500 }}>Curated Luxury Furniture</p>
-            <h2 style={{ fontFamily: "'DM Serif Display',serif", fontSize: "clamp(42px, 6vw, 72px)", fontWeight: 400, lineHeight: 1.1, marginBottom: 28, color: "#111", maxWidth: 700 }}>
-              Pieces That Define<br /><em style={{ fontStyle: "italic", color: "#888" }}>How You Live</em>
-            </h2>
-            <p style={{ fontSize: 15, color: "#888", lineHeight: 1.8, maxWidth: 480, marginBottom: 48, fontWeight: 300 }}>
-              Every piece handpicked for Dubai homes. No showroom markup. Delivered with care, free across the UAE.
-            </p>
-            <button onClick={() => navigate("shop")} style={{ padding: "18px 52px", fontSize: 11, letterSpacing: 3, textTransform: "uppercase", fontWeight: 500, background: "#111", color: "#f7f5f0", border: "none" }}
-              onMouseEnter={e => e.target.style.background = "#b8a080"} onMouseLeave={e => e.target.style.background = "#111"}>
-              View Collection
+      {/* ── HEADER ── */}
+      <header style={{
+        position: 'sticky', top: 0, zIndex: 100,
+        background: scrolled ? 'rgba(252,250,247,0.95)' : '#fcfaf7',
+        backdropFilter: scrolled ? 'blur(20px)' : 'none',
+        borderBottom: '1px solid rgba(0,0,0,0.06)',
+        transition: 'all 0.4s cubic-bezier(0.16,1,0.3,1)',
+        boxShadow: scrolled ? '0 4px 30px rgba(0,0,0,0.04)' : 'none',
+      }}>
+        <div style={{
+          maxWidth: 1400, margin: '0 auto', padding: '0 40px',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          height: scrolled ? 64 : 80, transition: 'height 0.4s cubic-bezier(0.16,1,0.3,1)',
+        }}>
+          {/* Left nav */}
+          <nav style={{ display: 'flex', gap: 32, alignItems: 'center', flex: 1 }}>
+            {['Shop', 'Collections'].map(item => (
+              <span key={item} onClick={() => navigate('shop')} style={{
+                fontFamily: "'DM Sans', sans-serif", fontSize: 13, letterSpacing: 1.5,
+                textTransform: 'uppercase', cursor: 'pointer', color: '#1a1a1a',
+                borderBottom: view === 'shop' ? '2px solid #c9b99a' : '2px solid transparent',
+                paddingBottom: 2, transition: 'all 0.3s',
+              }}>{item}</span>
+            ))}
+          </nav>
+
+          {/* Centre logo */}
+          <div onClick={() => navigate('home')} style={{ cursor: 'pointer', textAlign: 'center', flex: 1 }}>
+            <div style={{
+              fontFamily: "'Cormorant Garamond', serif", fontSize: scrolled ? 22 : 28,
+              fontWeight: 300, letterSpacing: 6, textTransform: 'uppercase',
+              color: '#1a1a1a', transition: 'font-size 0.4s cubic-bezier(0.16,1,0.3,1)', lineHeight: 1,
+            }}>Unicorn</div>
+            <div style={{
+              fontFamily: "'DM Sans', sans-serif", fontSize: 9, letterSpacing: 4,
+              textTransform: 'uppercase', color: '#999', marginTop: 2,
+            }}>Furniture · Dubai</div>
+          </div>
+
+          {/* Right actions */}
+          <div style={{ display: 'flex', gap: 24, alignItems: 'center', justifyContent: 'flex-end', flex: 1 }}>
+            <button onClick={() => navigate('cart')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18, color: '#1a1a1a', position: 'relative' }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4zM3 6h18M16 10a4 4 0 01-8 0"/></svg>
+              {cartCount > 0 && <span style={{ position: 'absolute', top: -6, right: -8, background: '#1a1a1a', color: '#fff', borderRadius: '50%', width: 16, height: 16, fontSize: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'DM Sans', sans-serif" }}>{cartCount}</span>}
             </button>
-            <div style={{ marginTop: 80, display: "flex", gap: 48 }}>
-              {[["200+","Pieces Curated"],["Free","UAE Delivery"],["30 Day","Returns"]].map(([n, l]) => (
-                <div key={l}>
-                  <p style={{ fontFamily: "'DM Serif Display',serif", fontSize: 24, color: "#111", marginBottom: 4 }}>{n}</p>
-                  <p style={{ fontSize: 10, letterSpacing: 2, textTransform: "uppercase", color: "#aaa" }}>{l}</p>
+          </div>
+        </div>
+      </header>
+
+      {/* ════════ HOME ════════ */}
+      {view === 'home' && (
+        <>
+          {/* Hero Banner */}
+          <div style={{
+            position: 'relative', height: '85vh', minHeight: 500, maxHeight: 800,
+            overflow: 'hidden', background: '#1a1a1a',
+          }}>
+            <div style={{
+              position: 'absolute', inset: 0,
+              backgroundImage: 'url(https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=1600&q=80)',
+              backgroundSize: 'cover', backgroundPosition: 'center',
+              opacity: 0.6, transition: 'all 1.8s cubic-bezier(0.16,1,0.3,1)',
+            }} />
+            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.5) 100%)' }} />
+            <div style={{
+              position: 'relative', zIndex: 2, height: '100%',
+              display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center',
+              textAlign: 'center', padding: '0 20px',
+            }}>
+              <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, letterSpacing: 5, textTransform: 'uppercase', color: '#c9b99a', marginBottom: 24 }}>
+                Curated Luxury Furniture
+              </div>
+              <h1 style={{
+                fontFamily: "'Cormorant Garamond', serif", fontSize: 'clamp(36px, 7vw, 80px)',
+                fontWeight: 300, color: '#fff', lineHeight: 1.1, maxWidth: 800,
+                margin: '0 0 24px', letterSpacing: 2,
+              }}>
+                Furniture That<br />Speaks Luxury
+              </h1>
+              <p style={{
+                fontFamily: "'DM Sans', sans-serif", fontSize: 15, color: 'rgba(255,255,255,0.7)',
+                maxWidth: 480, lineHeight: 1.7, margin: '0 0 40px',
+              }}>
+                Handpicked pieces for Dubai's finest homes.<br />
+                No showroom markup. Free delivery across the UAE.
+              </p>
+              <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', justifyContent: 'center' }}>
+                <button onClick={() => navigate('shop')} style={{
+                  fontFamily: "'DM Sans', sans-serif", fontSize: 12, letterSpacing: 3,
+                  textTransform: 'uppercase', background: '#c9b99a', color: '#1a1a1a',
+                  border: 'none', padding: '16px 48px', fontWeight: 500,
+                }}
+                onMouseOver={e => { e.target.style.background = '#b8a889'; e.target.style.transform = 'translateY(-2px)'; }}
+                onMouseOut={e => { e.target.style.background = '#c9b99a'; e.target.style.transform = 'translateY(0)'; }}
+                >Shop Collection</button>
+                <button onClick={() => window.open(waGeneral, '_blank')} style={{
+                  fontFamily: "'DM Sans', sans-serif", fontSize: 12, letterSpacing: 3,
+                  textTransform: 'uppercase', background: 'transparent', color: '#fff',
+                  border: '1px solid rgba(255,255,255,0.4)', padding: '16px 48px', fontWeight: 500,
+                }}
+                onMouseOver={e => { e.target.style.borderColor = '#c9b99a'; e.target.style.color = '#c9b99a'; }}
+                onMouseOut={e => { e.target.style.borderColor = 'rgba(255,255,255,0.4)'; e.target.style.color = '#fff'; }}
+                >WhatsApp Us</button>
+              </div>
+            </div>
+          </div>
+
+          {/* Trust Strip */}
+          <section style={{ background: '#f5f3ef', padding: '48px 40px' }}>
+            <div style={{ maxWidth: 1400, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 32, textAlign: 'center' }}>
+              {[
+                { icon: "🚚", title: "Free Dubai Delivery", sub: "On all orders" },
+                { icon: "🔧", title: "Free Assembly", sub: "Professional in-home setup" },
+                { icon: "🛡️", title: "Warranty Included", sub: "On all furniture" },
+                { icon: "💬", title: "WhatsApp Support", sub: "Instant response" },
+              ].map(item => (
+                <div key={item.title}>
+                  <div style={{ fontSize: 28, marginBottom: 8 }}>{item.icon}</div>
+                  <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, fontWeight: 600, color: '#1a1a1a', letterSpacing: 1, marginBottom: 4 }}>{item.title}</div>
+                  <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: '#888' }}>{item.sub}</div>
                 </div>
               ))}
             </div>
           </section>
 
-          <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 48px" }}><div style={{ height: 1, background: "linear-gradient(90deg, transparent, rgba(0,0,0,.08), transparent)" }} /></div>
-
           {/* Categories */}
           {categories.length > 0 && (
-            <section style={{ padding: "80px 48px", maxWidth: 1200, margin: "0 auto" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 48 }}>
-                <div>
-                  <p style={{ fontSize: 10, letterSpacing: 4, textTransform: "uppercase", color: "#b8a080", marginBottom: 8 }}>Browse</p>
-                  <h3 style={{ fontFamily: "'DM Serif Display',serif", fontSize: 36, fontWeight: 400 }}>By Category</h3>
-                </div>
-                <button onClick={() => { setFilter("all"); navigate("shop"); }} className="nl" style={{ background: "none", border: "none", fontSize: 11, letterSpacing: 2, textTransform: "uppercase", color: "#888", position: "relative" }}>View All →</button>
+            <section style={{ maxWidth: 1400, margin: '0 auto', padding: '80px 40px' }}>
+              <div style={{ textAlign: 'center', marginBottom: 48 }}>
+                <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, letterSpacing: 4, textTransform: 'uppercase', color: '#c9b99a', marginBottom: 12 }}>Browse</div>
+                <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 42, fontWeight: 300, color: '#1a1a1a', margin: 0, letterSpacing: 1 }}>Our Collections</h2>
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: `repeat(${Math.min(categories.length, 4)}, 1fr)`, gap: 3 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16 }}>
                 {categories.slice(0, 8).map((cat, i) => {
                   const cp = products.filter(p => p.category === cat);
                   const img = cp[0]?.image;
                   return (
-                    <div key={cat} onClick={() => { setFilter(cat); navigate("shop"); }}
-                      style={{ cursor: "pointer", position: "relative", overflow: "hidden", aspectRatio: "3/4", background: "#e8e5de", animation: `fadeIn .5s ease ${i * .08}s both` }}>
-                      {img && <img src={img} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", opacity: .75, transition: "all .6s cubic-bezier(.22,1,.36,1)" }}
-                        onMouseEnter={e => { e.target.style.transform = "scale(1.05)"; e.target.style.opacity = ".85"; }}
-                        onMouseLeave={e => { e.target.style.transform = "scale(1)"; e.target.style.opacity = ".75"; }}
-                        onError={e => e.target.style.display = "none"} />}
-                      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "40px 24px 24px", background: "linear-gradient(transparent, rgba(0,0,0,.55))" }}>
-                        <p style={{ fontFamily: "'DM Serif Display',serif", fontSize: 22, color: "#fff", marginBottom: 4 }}>{CAT_LABELS[cat] || cat}</p>
-                        <p style={{ fontSize: 10, color: "rgba(255,255,255,.6)", letterSpacing: 2, textTransform: "uppercase" }}>{cp.length} {cp.length === 1 ? "piece" : "pieces"}</p>
+                    <div key={cat} onClick={() => { setFilter(cat); navigate('shop'); }} style={{
+                      position: 'relative', height: i < 2 ? 360 : 280, overflow: 'hidden', cursor: 'pointer', background: '#f0ede8',
+                    }}>
+                      {img && <div style={{
+                        position: 'absolute', inset: 0, backgroundImage: `url(${img})`,
+                        backgroundSize: 'cover', backgroundPosition: 'center',
+                        transition: 'transform 0.8s cubic-bezier(0.16,1,0.3,1)',
+                      }}
+                      onMouseOver={e => e.target.style.transform = 'scale(1.08)'}
+                      onMouseOut={e => e.target.style.transform = 'scale(1)'}
+                      />}
+                      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.1) 60%)' }} />
+                      <div style={{ position: 'absolute', bottom: 24, left: 24, right: 24 }}>
+                        <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 24, fontWeight: 400, color: '#fff', marginBottom: 4 }}>{CAT_LABELS[cat] || cat}</div>
+                        <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: 'rgba(255,255,255,0.7)', letterSpacing: 1 }}>{cp.length} pieces</div>
                       </div>
                     </div>
                   );
@@ -604,231 +688,390 @@ export default function UnicornFurnitureApp() {
 
           {/* Featured */}
           {products.length > 0 && (
-            <section style={{ padding: "40px 48px 100px", maxWidth: 1200, margin: "0 auto" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 48 }}>
-                <div>
-                  <p style={{ fontSize: 10, letterSpacing: 4, textTransform: "uppercase", color: "#b8a080", marginBottom: 8 }}>Selection</p>
-                  <h3 style={{ fontFamily: "'DM Serif Display',serif", fontSize: 36, fontWeight: 400 }}>Featured Pieces</h3>
+            <section style={{ background: '#fff', padding: '80px 0' }}>
+              <div style={{ maxWidth: 1400, margin: '0 auto', padding: '0 40px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 48 }}>
+                  <div>
+                    <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, letterSpacing: 4, textTransform: 'uppercase', color: '#c9b99a', marginBottom: 12 }}>Curated</div>
+                    <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 42, fontWeight: 300, color: '#1a1a1a', margin: 0 }}>Featured Pieces</h2>
+                  </div>
+                  <span onClick={() => navigate('shop')} style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, letterSpacing: 2, textTransform: 'uppercase', color: '#1a1a1a', cursor: 'pointer', borderBottom: '1px solid #c9b99a', paddingBottom: 2 }}>View All</span>
                 </div>
-              </div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 32 }}>
-                {products.slice(0, 8).map((p, i) => <ProductCard key={p.id} product={p} onAdd={addToCart} onView={() => navigate("product", p)} delay={i * .06} />)}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 32 }}>
+                  {products.slice(0, 8).map(p => (
+                    <StoreProductCard key={p.id} product={p} onAdd={addToCart} onView={() => navigate('product', p)} />
+                  ))}
+                </div>
               </div>
             </section>
           )}
 
           {products.length === 0 && (
-            <section style={{ textAlign: "center", padding: "120px 48px" }}>
-              <div style={{ width: 48, height: 48, background: "#111", margin: "0 auto 20px", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <span style={{ color: "#f7f5f0", fontSize: 12, fontWeight: 600, letterSpacing: 2 }}>U</span>
-              </div>
-              <p style={{ color: "#888", fontSize: 14, fontWeight: 300 }}>Collection launching soon.</p>
-              <p style={{ color: "#bbb", fontSize: 12, marginTop: 12 }}>Type <code style={{ background: "#ece9e2", padding: "3px 10px", fontSize: 11, letterSpacing: 1 }}>unicorn</code> to open admin.</p>
+            <section style={{ textAlign: 'center', padding: '120px 40px' }}>
+              <div style={{ fontSize: 48, marginBottom: 16, opacity: .3 }}>🦄</div>
+              <p style={{ fontFamily: "'DM Sans', sans-serif", color: '#999', fontSize: 15 }}>Collection launching soon.</p>
+              <p style={{ fontFamily: "'DM Sans', sans-serif", color: '#bbb', fontSize: 13, marginTop: 12 }}>Type <code style={{ background: '#f0ede8', padding: '3px 10px', fontSize: 12 }}>unicorn</code> to open admin.</p>
             </section>
           )}
 
-          {/* Trust */}
-          <section style={{ padding: "56px 48px", background: "#111" }}>
-            <div style={{ maxWidth: 1000, margin: "0 auto", display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 32 }}>
-              {[["Free Delivery","Anywhere in the UAE"],["Secure Checkout","Protected payments"],["30-Day Returns","No questions asked"],["WhatsApp Support","Real humans, fast replies"]].map(([t, s]) => (
-                <div key={t} style={{ textAlign: "center", flex: "1 1 200px" }}>
-                  <p style={{ fontSize: 13, color: "#f7f5f0", fontWeight: 400, marginBottom: 4 }}>{t}</p>
-                  <p style={{ fontSize: 10, color: "#666", letterSpacing: 1.5, textTransform: "uppercase" }}>{s}</p>
-                </div>
-              ))}
+          {/* Promo Banner */}
+          <section style={{
+            position: 'relative', height: 400, overflow: 'hidden',
+            backgroundImage: 'url(https://images.unsplash.com/photo-1600210492493-0946911123ea?w=1600&q=80)',
+            backgroundSize: 'cover', backgroundPosition: 'center',
+          }}>
+            <div style={{ position: 'absolute', inset: 0, background: 'rgba(26,26,26,0.7)' }} />
+            <div style={{
+              position: 'relative', zIndex: 2, height: '100%',
+              display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center',
+              textAlign: 'center', padding: '0 20px',
+            }}>
+              <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, letterSpacing: 5, textTransform: 'uppercase', color: '#c9b99a', marginBottom: 16 }}>Direct From Source</div>
+              <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 'clamp(28px, 5vw, 52px)', fontWeight: 300, color: '#fff', margin: '0 0 12px' }}>No Showroom Markup</h2>
+              <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: 'rgba(255,255,255,0.6)', marginBottom: 32 }}>Save 40-60% vs retail · Free delivery · Assembly included</p>
+              <button onClick={() => window.open(waGeneral, '_blank')} style={{
+                fontFamily: "'DM Sans', sans-serif", fontSize: 12, letterSpacing: 3,
+                textTransform: 'uppercase', background: '#c9b99a', color: '#1a1a1a',
+                border: 'none', padding: '16px 48px', cursor: 'pointer',
+              }}>Get in Touch</button>
             </div>
           </section>
-
-          <StoreFooter />
-        </div>
+        </>
       )}
 
-      {/* SHOP */}
-      {view === "shop" && (
-        <div style={{ animation: "fadeIn .4s ease" }}>
-          <section style={{ padding: "60px 48px 80px", maxWidth: 1200, margin: "0 auto" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 48 }}>
-              <div>
-                <p style={{ fontSize: 10, letterSpacing: 4, textTransform: "uppercase", color: "#b8a080", marginBottom: 8 }}>Explore</p>
-                <h2 style={{ fontFamily: "'DM Serif Display',serif", fontSize: 40, fontWeight: 400 }}>The Collection</h2>
-              </div>
-              <p style={{ fontSize: 12, color: "#aaa" }}>{shopProducts.length} {shopProducts.length === 1 ? "piece" : "pieces"}</p>
-            </div>
-            <div style={{ display: "flex", gap: 6, marginBottom: 48, flexWrap: "wrap" }}>
-              <button onClick={() => setFilter("all")} style={{ padding: "10px 20px", fontSize: 10, letterSpacing: 2, textTransform: "uppercase", fontWeight: filter === "all" ? 500 : 300, background: filter === "all" ? "#111" : "transparent", color: filter === "all" ? "#f7f5f0" : "#888", border: filter === "all" ? "none" : "1px solid #ddd" }}>All</button>
-              {categories.map(c => (
-                <button key={c} onClick={() => setFilter(c)} style={{ padding: "10px 20px", fontSize: 10, letterSpacing: 2, textTransform: "uppercase", fontWeight: filter === c ? 500 : 300, background: filter === c ? "#111" : "transparent", color: filter === c ? "#f7f5f0" : "#888", border: filter === c ? "none" : "1px solid #ddd" }}>{CAT_LABELS[c] || c}</button>
-              ))}
-            </div>
-            {shopProducts.length === 0 ? (
-              <p style={{ color: "#999", textAlign: "center", padding: 80, fontSize: 14, fontWeight: 300 }}>No pieces in this category yet.</p>
-            ) : (
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 32 }}>
-                {shopProducts.map((p, i) => <ProductCard key={p.id} product={p} onAdd={addToCart} onView={() => navigate("product", p)} delay={i * .04} />)}
-              </div>
-            )}
-          </section>
-          <StoreFooter />
-        </div>
+      {/* ════════ SHOP ════════ */}
+      {view === 'shop' && (
+        <section style={{ maxWidth: 1400, margin: '0 auto', padding: '48px 40px' }}>
+          {/* Breadcrumb */}
+          <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: '#999', marginBottom: 32 }}>
+            <span onClick={() => navigate('home')} style={{ cursor: 'pointer' }}>Home</span> / <span style={{ color: '#1a1a1a' }}>Shop</span>
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 40, flexWrap: 'wrap', gap: 16 }}>
+            <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 42, fontWeight: 300, color: '#1a1a1a', margin: 0 }}>
+              {filter === 'all' ? 'All Pieces' : (CAT_LABELS[filter] || filter)}
+            </h1>
+            <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: '#999' }}>{shopProducts.length} pieces</span>
+          </div>
+
+          {/* Category pills */}
+          <div style={{ display: 'flex', gap: 8, marginBottom: 40, overflowX: 'auto', paddingBottom: 8 }}>
+            <button onClick={() => setFilter('all')} style={{
+              fontFamily: "'DM Sans', sans-serif", fontSize: 11, letterSpacing: 1.5, textTransform: 'uppercase',
+              padding: '10px 20px', border: '1px solid', cursor: 'pointer', whiteSpace: 'nowrap',
+              background: filter === 'all' ? '#1a1a1a' : 'transparent',
+              color: filter === 'all' ? '#fff' : '#1a1a1a',
+              borderColor: filter === 'all' ? '#1a1a1a' : '#ddd',
+            }}>All</button>
+            {categories.map(cat => (
+              <button key={cat} onClick={() => setFilter(cat)} style={{
+                fontFamily: "'DM Sans', sans-serif", fontSize: 11, letterSpacing: 1.5, textTransform: 'uppercase',
+                padding: '10px 20px', border: '1px solid', cursor: 'pointer', whiteSpace: 'nowrap',
+                background: filter === cat ? '#1a1a1a' : 'transparent',
+                color: filter === cat ? '#fff' : '#1a1a1a',
+                borderColor: filter === cat ? '#1a1a1a' : '#ddd',
+              }}>{CAT_LABELS[cat] || cat}</button>
+            ))}
+          </div>
+
+          {/* Product grid */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 32 }}>
+            {shopProducts.map(p => (
+              <StoreProductCard key={p.id} product={p} onAdd={addToCart} onView={() => navigate('product', p)} />
+            ))}
+          </div>
+          {shopProducts.length === 0 && (
+            <div style={{ textAlign: 'center', padding: '80px 0', color: '#999', fontFamily: "'DM Sans', sans-serif" }}>No products in this category yet.</div>
+          )}
+        </section>
       )}
 
-      {/* PRODUCT DETAIL */}
-      {view === "product" && selectedProduct && (
-        <div style={{ animation: "fadeIn .4s ease", maxWidth: 1100, margin: "0 auto", padding: "40px 48px 100px" }}>
-          <button onClick={() => navigate("shop")} className="nl" style={{ background: "none", border: "none", fontSize: 11, letterSpacing: 2, textTransform: "uppercase", color: "#888", marginBottom: 48, display: "inline-block", position: "relative" }}>← Back to Collection</button>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 64, alignItems: "start" }}>
+      {/* ════════ PRODUCT DETAIL ════════ */}
+      {view === 'product' && selectedProduct && (
+        <section style={{ maxWidth: 1400, margin: '0 auto', padding: '48px 40px' }}>
+          {/* Breadcrumb */}
+          <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: '#999', marginBottom: 32 }}>
+            <span onClick={() => navigate('home')} style={{ cursor: 'pointer' }}>Home</span> / <span onClick={() => navigate('shop')} style={{ cursor: 'pointer' }}>Shop</span> / <span style={{ color: '#1a1a1a' }}>{selectedProduct.name}</span>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 64, marginBottom: 80 }}>
+            {/* Image */}
             <div>
-              <div style={{ aspectRatio: "4/5", overflow: "hidden", background: "#ece9e2" }}>
-                {selectedProduct.image ? <img src={selectedProduct.image} alt={selectedProduct.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={e => e.target.style.display = "none"} />
-                  : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}><span style={{ fontSize: 11, fontWeight: 600, color: "#ccc", letterSpacing: 3 }}>UNICORN</span></div>}
+              <div style={{ position: 'relative', paddingTop: '100%', overflow: 'hidden', background: '#f0ede8' }}>
+                {selectedProduct.image ? <img src={selectedProduct.image} alt={selectedProduct.name} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} onError={e => e.target.style.display = 'none'} />
+                  : <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 48, opacity: .15 }}>🦄</div>}
+                {selectedProduct.badge && (
+                  <span style={{ position: 'absolute', top: 20, left: 20, background: '#1a1a1a', color: '#fff', fontFamily: "'DM Sans', sans-serif", fontSize: 11, letterSpacing: 1.5, textTransform: 'uppercase', padding: '6px 14px' }}>{selectedProduct.badge}</span>
+                )}
               </div>
               {selectedProduct.images?.length > 1 && (
-                <div style={{ display: "flex", gap: 3, marginTop: 3 }}>
+                <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
                   {selectedProduct.images.slice(0, 4).map((img, i) => (
-                    <div key={i} style={{ flex: 1, height: 80, overflow: "hidden", background: "#ece9e2" }}>
-                      <img src={img} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={e => e.target.style.display = "none"} />
+                    <div key={i} style={{ flex: 1, height: 80, overflow: 'hidden', background: '#f0ede8' }}>
+                      <img src={img} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e => e.target.style.display = 'none'} />
                     </div>
                   ))}
                 </div>
               )}
             </div>
-            <div style={{ paddingTop: 16 }}>
-              <p style={{ fontSize: 10, letterSpacing: 3, textTransform: "uppercase", color: "#b8a080", marginBottom: 12 }}>{CAT_LABELS[selectedProduct.category] || selectedProduct.category}</p>
-              <h2 style={{ fontFamily: "'DM Serif Display',serif", fontSize: 32, fontWeight: 400, lineHeight: 1.25, marginBottom: 12 }}>{selectedProduct.name}</h2>
-              <p style={{ fontSize: 14, color: "#888", lineHeight: 1.7, marginBottom: 28 }}>{selectedProduct.description}</p>
-              <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginBottom: 32 }}>
-                <span style={{ fontFamily: "'DM Serif Display',serif", fontSize: 28, color: "#111" }}>AED {selectedProduct.price_aed?.toLocaleString()}</span>
-                {selectedProduct.old_price_aed > selectedProduct.price_aed && <span style={{ fontSize: 14, color: "#bbb", textDecoration: "line-through" }}>AED {selectedProduct.old_price_aed?.toLocaleString()}</span>}
+
+            {/* Details */}
+            <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+              <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, letterSpacing: 3, textTransform: 'uppercase', color: '#c9b99a', marginBottom: 12 }}>
+                {CAT_LABELS[selectedProduct.category] || selectedProduct.category}
               </div>
-              {selectedProduct.colors && <p style={{ fontSize: 12, color: "#888", marginBottom: 8 }}>Colours — {selectedProduct.colors}</p>}
-              {selectedProduct.sizes && <p style={{ fontSize: 12, color: "#888", marginBottom: 28 }}>Sizes — {selectedProduct.sizes}</p>}
-              <div style={{ display: "flex", gap: 3, marginBottom: 20 }}>
-                <button onClick={() => addToCart(selectedProduct)} style={{ flex: 1, padding: "18px", fontSize: 11, letterSpacing: 2.5, textTransform: "uppercase", fontWeight: 500, background: "#111", color: "#f7f5f0", border: "none" }}
-                  onMouseEnter={e => e.target.style.background = "#222"} onMouseLeave={e => e.target.style.background = "#111"}>Add to Bag</button>
-                <a href={waLink(selectedProduct)} target="_blank" rel="noreferrer" style={{ flex: 1, padding: "18px", fontSize: 11, letterSpacing: 2.5, textTransform: "uppercase", fontWeight: 500, background: "#25d366", color: "#fff", border: "none", textAlign: "center", display: "flex", alignItems: "center", justifyContent: "center" }}>WhatsApp Us</a>
+
+              <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 36, fontWeight: 400, color: '#1a1a1a', margin: '0 0 16px', lineHeight: 1.2 }}>{selectedProduct.name}</h1>
+
+              <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 24 }}>
+                <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 28, fontWeight: 600, color: '#1a1a1a' }}>AED {selectedProduct.price_aed?.toLocaleString()}</span>
+                {selectedProduct.old_price_aed > selectedProduct.price_aed && <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 18, color: '#999', textDecoration: 'line-through' }}>AED {selectedProduct.old_price_aed?.toLocaleString()}</span>}
+                {discount && <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, background: '#c9b99a', color: '#fff', padding: '3px 10px', letterSpacing: 1 }}>-{discount}%</span>}
               </div>
-              <div style={{ paddingTop: 28, borderTop: "1px solid #e8e5de" }}>
-                {["Free delivery anywhere in the UAE","30-day return policy","Secure checkout & payment"].map(t => (
-                  <p key={t} style={{ fontSize: 11, color: "#aaa", marginBottom: 8, paddingLeft: 16, position: "relative" }}>
-                    <span style={{ position: "absolute", left: 0, color: "#ccc" }}>—</span> {t}
-                  </p>
-                ))}
+
+              <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: '#666', lineHeight: 1.7, marginBottom: 32 }}>
+                {selectedProduct.description || "Premium quality furniture handpicked for Dubai homes. Each piece is sourced for exceptional quality and delivered with care."}
+              </p>
+
+              {/* Colours */}
+              {selectedProduct.colors && (
+                <div style={{ marginBottom: 24 }}>
+                  <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, fontWeight: 600, letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 10, color: '#1a1a1a' }}>Colours</div>
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    {selectedProduct.colors.split(',').map(c => c.trim()).filter(Boolean).map(c => (
+                      <span key={c} style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, padding: '8px 16px', border: '1px solid #ddd', background: '#fff' }}>{c}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Sizes */}
+              {selectedProduct.sizes && (
+                <div style={{ marginBottom: 32 }}>
+                  <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, fontWeight: 600, letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 10, color: '#1a1a1a' }}>Sizes</div>
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    {selectedProduct.sizes.split(',').map(s => s.trim()).filter(Boolean).map(s => (
+                      <span key={s} style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, padding: '8px 16px', border: '1px solid #ddd', background: '#fff' }}>{s}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Add to cart + WhatsApp */}
+              <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
+                <button onClick={() => addToCart(selectedProduct)} style={{
+                  flex: 1, fontFamily: "'DM Sans', sans-serif", fontSize: 12, letterSpacing: 3,
+                  textTransform: 'uppercase', background: '#1a1a1a', color: '#fff',
+                  border: 'none', padding: '16px',
+                }}
+                onMouseOver={e => e.target.style.background = '#333'}
+                onMouseOut={e => e.target.style.background = '#1a1a1a'}
+                >Add to Cart — AED {selectedProduct.price_aed?.toLocaleString()}</button>
+              </div>
+
+              <a href={waLink(selectedProduct)} target="_blank" rel="noreferrer" style={{
+                display: 'block', width: '100%', padding: '14px', fontFamily: "'DM Sans', sans-serif", fontSize: 12,
+                letterSpacing: 2, textTransform: 'uppercase', textAlign: 'center',
+                background: '#25D366', color: '#fff', border: 'none', marginBottom: 16,
+              }}>WhatsApp Us About This Piece</a>
+
+              <div style={{ padding: 20, background: '#f5f3ef', display: 'flex', gap: 12, alignItems: 'center' }}>
+                <span style={{ fontSize: 20 }}>💬</span>
+                <div>
+                  <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, fontWeight: 600, color: '#1a1a1a' }}>Need help choosing?</div>
+                  <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: '#666' }}>
+                    <a href={waGeneral} target="_blank" rel="noreferrer" style={{ color: '#25D366', textDecoration: 'underline' }}>WhatsApp our team</a> for instant advice
+                  </div>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+
+          {/* Related */}
+          {related.length > 0 && (
+            <>
+              <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 32, fontWeight: 300, color: '#1a1a1a', marginBottom: 32 }}>You May Also Like</h3>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 32 }}>
+                {related.map(p => (
+                  <StoreProductCard key={p.id} product={p} onAdd={addToCart} onView={() => navigate('product', p)} />
+                ))}
+              </div>
+            </>
+          )}
+        </section>
       )}
 
-      {/* CART */}
-      {view === "cart" && (
-        <div style={{ animation: "fadeIn .3s ease", maxWidth: 700, margin: "0 auto", padding: "48px 48px 100px" }}>
-          <p style={{ fontSize: 10, letterSpacing: 4, textTransform: "uppercase", color: "#b8a080", marginBottom: 8 }}>Your Selection</p>
-          <h2 style={{ fontFamily: "'DM Serif Display',serif", fontSize: 40, fontWeight: 400, marginBottom: 40 }}>Shopping Bag</h2>
+      {/* ════════ CART ════════ */}
+      {view === 'cart' && (
+        <section style={{ maxWidth: 1000, margin: '0 auto', padding: '48px 40px' }}>
+          <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 42, fontWeight: 300, color: '#1a1a1a', marginBottom: 48 }}>Your Cart</h1>
           {cart.length === 0 ? (
-            <div style={{ textAlign: "center", padding: "80px 0" }}>
-              <div style={{ width: 48, height: 48, background: "#e8e5de", margin: "0 auto 20px", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <span style={{ color: "#999", fontSize: 11, fontWeight: 600 }}>0</span>
-              </div>
-              <p style={{ color: "#888", fontSize: 14, fontWeight: 300 }}>Your bag is empty</p>
-              <button onClick={() => navigate("shop")} style={{ marginTop: 24, padding: "16px 44px", fontSize: 11, letterSpacing: 2.5, textTransform: "uppercase", background: "#111", color: "#f7f5f0", border: "none" }}>Browse Collection</button>
+            <div style={{ textAlign: 'center', padding: '80px 0' }}>
+              <div style={{ fontSize: 48, marginBottom: 16 }}>🛍️</div>
+              <p style={{ fontFamily: "'DM Sans', sans-serif", color: '#999', marginBottom: 24 }}>Your cart is empty</p>
+              <button onClick={() => navigate('shop')} style={{
+                fontFamily: "'DM Sans', sans-serif", fontSize: 12, letterSpacing: 3,
+                textTransform: 'uppercase', background: '#1a1a1a', color: '#fff',
+                border: 'none', padding: '16px 48px',
+              }}>Continue Shopping</button>
             </div>
           ) : (
             <>
-              {cart.map(item => (
-                <div key={item.id} style={{ display: "flex", alignItems: "center", gap: 24, padding: "24px 0", borderBottom: "1px solid #e8e5de" }}>
-                  <div style={{ width: 90, height: 90, overflow: "hidden", background: "#ece9e2", flexShrink: 0 }}>
-                    {item.image ? <img src={item.image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "#ccc", fontSize: 11, fontWeight: 600, letterSpacing: 2 }}>U</div>}
+              {cart.map((item, i) => (
+                <div key={item.id} style={{ display: 'flex', gap: 24, padding: '24px 0', borderBottom: '1px solid #eee', alignItems: 'center' }}>
+                  <div style={{ width: 100, height: 100, overflow: 'hidden', background: '#f0ede8', flexShrink: 0 }}>
+                    {item.image ? <img src={item.image} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ccc' }}>🦄</div>}
                   </div>
                   <div style={{ flex: 1 }}>
-                    <p style={{ fontSize: 14, fontWeight: 400, marginBottom: 4 }}>{item.name}</p>
-                    <p style={{ fontSize: 11, color: "#aaa", letterSpacing: 1 }}>Qty: {item.qty}</p>
+                    <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 18, fontWeight: 500, color: '#1a1a1a' }}>{item.name}</div>
+                    <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: '#999', marginTop: 4 }}>Qty: {item.qty}</div>
                   </div>
-                  <p style={{ fontFamily: "'DM Serif Display',serif", fontSize: 18, minWidth: 100, textAlign: "right" }}>AED {(item.price_aed * item.qty).toLocaleString()}</p>
-                  <button onClick={() => setCart(c => c.filter(i => i.id !== item.id))} style={{ background: "none", border: "none", color: "#ccc", fontSize: 20, padding: "4px 8px" }}
-                    onMouseEnter={e => e.target.style.color = "#111"} onMouseLeave={e => e.target.style.color = "#ccc"}>×</button>
+                  <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 15, fontWeight: 600, color: '#1a1a1a', minWidth: 100, textAlign: 'right' }}>AED {(item.price_aed * item.qty).toLocaleString()}</div>
+                  <button onClick={() => setCart(c => c.filter(x => x.id !== item.id))} style={{ background: 'none', border: 'none', color: '#999', fontSize: 18 }}>×</button>
                 </div>
               ))}
-              <div style={{ padding: "32px 0", display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-                <span style={{ fontSize: 11, letterSpacing: 2, textTransform: "uppercase", color: "#888" }}>Total</span>
-                <span style={{ fontFamily: "'DM Serif Display',serif", fontSize: 32 }}>AED {cartTotal.toLocaleString()}</span>
+
+              <div style={{ padding: '32px 0', borderTop: '2px solid #1a1a1a', marginTop: 24 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: '#666' }}>Subtotal</span>
+                  <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, fontWeight: 600 }}>AED {cartTotal.toLocaleString()}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24 }}>
+                  <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: '#666' }}>Delivery</span>
+                  <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: '#4a6741' }}>Free</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 32, paddingTop: 16, borderTop: '1px solid #eee' }}>
+                  <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, fontWeight: 500 }}>Total</span>
+                  <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 22, fontWeight: 700 }}>AED {cartTotal.toLocaleString()}</span>
+                </div>
+
+                <a href={`https://wa.me/${WA}?text=${encodeURIComponent(`Hi! I'd like to order:\n${cart.map(i => `• ${i.name} x${i.qty} — AED ${(i.price_aed * i.qty).toLocaleString()}`).join("\n")}\n\nTotal: AED ${cartTotal.toLocaleString()}`)}`} target="_blank" rel="noreferrer"
+                  style={{
+                    display: 'block', width: '100%', padding: '18px', fontFamily: "'DM Sans', sans-serif", fontSize: 13,
+                    letterSpacing: 3, textTransform: 'uppercase', background: '#25D366', color: '#fff',
+                    border: 'none', textAlign: 'center', marginBottom: 12, fontWeight: 500,
+                  }}>Order via WhatsApp</a>
+                <button onClick={() => navigate('shop')} style={{
+                  width: '100%', padding: '16px', fontFamily: "'DM Sans', sans-serif", fontSize: 12,
+                  letterSpacing: 2, textTransform: 'uppercase', background: 'transparent',
+                  color: '#1a1a1a', border: '1px solid #ddd',
+                }}>Continue Shopping</button>
               </div>
-              <a href={`https://wa.me/${WA}?text=${encodeURIComponent(`Hi! I'd like to order:\n${cart.map(i => `• ${i.name} x${i.qty} — AED ${(i.price_aed * i.qty).toLocaleString()}`).join("\n")}\n\nTotal: AED ${cartTotal.toLocaleString()}`)}`} target="_blank" rel="noreferrer"
-                style={{ display: "block", width: "100%", padding: "20px", fontSize: 11, letterSpacing: 2.5, textTransform: "uppercase", fontWeight: 500, background: "#25d366", color: "#fff", border: "none", textAlign: "center" }}>
-                Complete Order via WhatsApp →
-              </a>
             </>
           )}
-        </div>
+        </section>
       )}
 
+      {/* ── FOOTER ── */}
+      <footer style={{ background: '#1a1a1a', color: '#fff', padding: '64px 40px 32px' }}>
+        <div style={{ maxWidth: 1400, margin: '0 auto' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 48, marginBottom: 48 }}>
+            <div>
+              <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 28, fontWeight: 300, letterSpacing: 4, marginBottom: 16 }}>UNICORN</div>
+              <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: 'rgba(255,255,255,0.5)', lineHeight: 1.7 }}>
+                Premium furniture curated for Dubai's finest homes. A division of First Unicorn Group.
+              </p>
+            </div>
+            <div>
+              <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', color: '#c9b99a', marginBottom: 16 }}>Shop</div>
+              {Object.values(CAT_LABELS).slice(0, 6).map(item => (
+                <div key={item} onClick={() => navigate('shop')} style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: 'rgba(255,255,255,0.5)', marginBottom: 10, cursor: 'pointer' }}>{item}</div>
+              ))}
+            </div>
+            <div>
+              <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', color: '#c9b99a', marginBottom: 16 }}>Help</div>
+              {['Delivery Information', 'Returns & Exchanges', 'Care Guide', 'FAQ'].map(item => (
+                <div key={item} style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: 'rgba(255,255,255,0.5)', marginBottom: 10 }}>{item}</div>
+              ))}
+            </div>
+            <div>
+              <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', color: '#c9b99a', marginBottom: 16 }}>Contact</div>
+              <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: 'rgba(255,255,255,0.5)', marginBottom: 10 }}>Dubai, UAE</div>
+              <a href={waGeneral} target="_blank" rel="noreferrer" style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: '#25D366', marginBottom: 10, display: 'block' }}>WhatsApp: +971 52 645 5121</a>
+            </div>
+          </div>
+          <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 24, display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
+            <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: 'rgba(255,255,255,0.3)' }}>© 2026 Unicorn Furniture. A First Unicorn Group company.</div>
+            <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: 'rgba(255,255,255,0.3)' }}>Prices in AED. VAT included.</div>
+          </div>
+        </div>
+      </footer>
+
       {/* WhatsApp FAB */}
-      <a href={waGeneral} target="_blank" rel="noreferrer"
-        style={{ position: "fixed", bottom: 28, right: 28, width: 52, height: 52, background: "#25d366", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 24px rgba(37,211,102,.35)", zIndex: 100, animation: "float 3s ease infinite" }}>
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="#fff"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.625.846 5.059 2.284 7.034L.789 23.492a.5.5 0 00.612.638l4.748-1.246A11.944 11.944 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-2.25 0-4.345-.672-6.098-1.826l-.426-.28-3.2.84.856-3.13-.305-.484A9.934 9.934 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+      <a href={waGeneral} target="_blank" rel="noreferrer" style={{
+        position: 'fixed', bottom: 24, right: 24, zIndex: 999,
+        width: 56, height: 56, borderRadius: '50%', background: '#25D366',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        boxShadow: '0 4px 20px rgba(37,211,102,0.4)', transition: 'transform 0.3s',
+      }}
+      onMouseOver={e => e.currentTarget.style.transform = 'scale(1.1)'}
+      onMouseOut={e => e.currentTarget.style.transform = 'scale(1)'}
+      >
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="#fff">
+          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+        </svg>
       </a>
 
-      {toast && <div style={{ position: "fixed", bottom: 28, left: "50%", transform: "translateX(-50%)", background: "#111", padding: "16px 32px", fontSize: 12, color: "#f7f5f0", animation: "toast .3s ease", zIndex: 999, boxShadow: "0 12px 48px rgba(0,0,0,.15)", letterSpacing: .5 }}>{toast}</div>}
+      {toast && <div style={{ position: 'fixed', bottom: 28, left: '50%', transform: 'translateX(-50%)', background: '#1a1a1a', borderRadius: 10, padding: '14px 28px', fontSize: 13, color: '#fff', animation: 'toast .3s ease', zIndex: 999, boxShadow: '0 12px 48px rgba(0,0,0,.2)' }}>{toast}</div>}
     </div>
   );
 }
 
-// ── Product Card ──
-function ProductCard({ product: p, onAdd, onView, delay = 0 }) {
+// ── Store Product Card ──
+function StoreProductCard({ product: p, onAdd, onView }) {
+  const [hovered, setHovered] = useState(false);
+  const disc = p.old_price_aed > p.price_aed ? Math.round((1 - p.price_aed / p.old_price_aed) * 100) : null;
+
   return (
-    <div className="pc" style={{ animation: `fadeIn .5s ease ${delay}s both`, cursor: "pointer" }} onClick={onView}>
-      <div style={{ position: "relative", aspectRatio: "3/4", overflow: "hidden", background: "#ece9e2", marginBottom: 16 }}>
-        {p.image ? <img className="pc-img" src={p.image} alt={p.name} style={{ width: "100%", height: "100%", objectFit: "cover", transition: "transform .7s cubic-bezier(.22,1,.36,1)" }}
-          onError={e => e.target.style.display = "none"} />
-          : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}><span style={{ fontSize: 11, fontWeight: 600, color: "#ccc", letterSpacing: 3 }}>UNICORN</span></div>}
-        <div className="pc-overlay" style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,.08)", display: "flex", alignItems: "flex-end", justifyContent: "center", paddingBottom: 20, opacity: 0, transition: "opacity .3s" }}>
-          <span style={{ fontSize: 10, letterSpacing: 2.5, textTransform: "uppercase", color: "#fff", fontWeight: 500, background: "rgba(0,0,0,.5)", padding: "10px 24px", backdropFilter: "blur(8px)" }}>View Details</span>
+    <div onMouseOver={() => setHovered(true)} onMouseOut={() => setHovered(false)} style={{ position: 'relative', cursor: 'pointer' }}>
+      {/* Image */}
+      <div onClick={onView} style={{ position: 'relative', paddingTop: '120%', overflow: 'hidden', background: '#f0ede8', marginBottom: 16 }}>
+        {p.image ? <img src={p.image} alt={p.name} style={{
+          position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover',
+          transition: 'transform 0.8s cubic-bezier(0.16,1,0.3,1)',
+          transform: hovered ? 'scale(1.05)' : 'scale(1)',
+        }} onError={e => e.target.style.display = 'none'} />
+          : <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 48, opacity: .15 }}>🦄</div>}
+
+        {p.badge && (
+          <span style={{
+            position: 'absolute', top: 12, left: 12,
+            background: p.badge === 'Sale' ? '#c9b99a' : '#1a1a1a',
+            color: '#fff', fontFamily: "'DM Sans', sans-serif", fontSize: 10,
+            letterSpacing: 1.5, textTransform: 'uppercase', padding: '5px 12px',
+          }}>{p.badge}{disc ? ` -${disc}%` : ''}</span>
+        )}
+
+        {/* Quick add */}
+        <div style={{
+          position: 'absolute', bottom: 12, left: 12, right: 12,
+          display: 'flex', gap: 8, justifyContent: 'center',
+          opacity: hovered ? 1 : 0, transform: hovered ? 'translateY(0)' : 'translateY(10px)',
+          transition: 'all 0.3s cubic-bezier(0.16,1,0.3,1)',
+        }}>
+          <button onClick={e => { e.stopPropagation(); onAdd(p); }} style={{
+            flex: 1, padding: '12px', background: 'rgba(26,26,26,0.9)', color: '#fff',
+            border: 'none', fontFamily: "'DM Sans', sans-serif", fontSize: 11,
+            letterSpacing: 2, textTransform: 'uppercase', backdropFilter: 'blur(10px)',
+          }}>Add to Cart</button>
         </div>
-        {p.badge && <span style={{ position: "absolute", top: 16, left: 16, fontSize: 9, padding: "5px 12px", letterSpacing: 2, textTransform: "uppercase", fontWeight: 500, background: "#111", color: "#f7f5f0" }}>{p.badge}</span>}
       </div>
-      <p style={{ fontSize: 10, letterSpacing: 2, textTransform: "uppercase", color: "#b8a080", marginBottom: 6 }}>{CAT_LABELS[p.category] || p.category}</p>
-      <p style={{ fontSize: 14, fontWeight: 400, marginBottom: 8, color: "#111" }}>{p.name}</p>
-      <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-        <span style={{ fontFamily: "'DM Serif Display',serif", fontSize: 16, color: "#111" }}>AED {p.price_aed?.toLocaleString()}</span>
-        {p.old_price_aed > p.price_aed && <span style={{ fontSize: 11, color: "#ccc", textDecoration: "line-through" }}>AED {p.old_price_aed?.toLocaleString()}</span>}
-      </div>
-      <div style={{ marginTop: 12, height: 1, background: "#e0ddd6", position: "relative" }}>
-        <div className="pc-line" style={{ position: "absolute", top: 0, left: 0, height: 1, background: "#111", width: 0, transition: "width .4s ease" }} />
-      </div>
-    </div>
-  );
-}
 
-// ── Footer ──
-function StoreFooter() {
-  return (
-    <footer style={{ padding: "80px 48px 48px", background: "#111", color: "#888" }}>
-      <div style={{ maxWidth: 1200, margin: "0 auto", display: "grid", gridTemplateColumns: "2fr 1fr 1fr", gap: 64 }}>
-        <div>
-          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
-            <div style={{ width: 28, height: 28, background: "#f7f5f0", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <span style={{ color: "#111", fontSize: 9, fontWeight: 600, letterSpacing: 1 }}>U</span>
-            </div>
-            <span style={{ fontFamily: "'DM Serif Display',serif", fontSize: 18, color: "#f7f5f0" }}>Unicorn Furniture</span>
+      {/* Info */}
+      <div onClick={onView}>
+        <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 18, fontWeight: 500, color: '#1a1a1a', marginBottom: 6, lineHeight: 1.3 }}>{p.name}</div>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 15, fontWeight: 600, color: '#1a1a1a' }}>AED {p.price_aed?.toLocaleString()}</span>
+          {p.old_price_aed > p.price_aed && <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: '#999', textDecoration: 'line-through' }}>AED {p.old_price_aed?.toLocaleString()}</span>}
+        </div>
+        {p.colors && (
+          <div style={{ display: 'flex', gap: 6, marginTop: 8, flexWrap: 'wrap' }}>
+            {p.colors.split(',').slice(0, 3).map(c => c.trim()).filter(Boolean).map(c => (
+              <span key={c} style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: '#777', background: '#f5f3ef', padding: '3px 8px' }}>{c}</span>
+            ))}
           </div>
-          <p style={{ fontSize: 12, lineHeight: 1.8, maxWidth: 320 }}>Premium luxury furniture curated for Dubai homes. A First Unicorn Group company.</p>
-        </div>
-        <div>
-          <p style={{ fontSize: 10, letterSpacing: 3, textTransform: "uppercase", color: "#555", marginBottom: 16 }}>Company</p>
-          <p style={{ fontSize: 13, marginBottom: 10 }}>Collection</p>
-          <p style={{ fontSize: 13, marginBottom: 10 }}>About</p>
-          <p style={{ fontSize: 13 }}>Contact</p>
-        </div>
-        <div>
-          <p style={{ fontSize: 10, letterSpacing: 3, textTransform: "uppercase", color: "#555", marginBottom: 16 }}>Contact</p>
-          <p style={{ fontSize: 13, marginBottom: 10 }}>+971 52 645 5121</p>
-          <p style={{ fontSize: 13, marginBottom: 10 }}>Dubai, UAE</p>
-          <p style={{ fontSize: 13 }}>WhatsApp Us</p>
-        </div>
+        )}
       </div>
-      <div style={{ maxWidth: 1200, margin: "56px auto 0", paddingTop: 24, borderTop: "1px solid #222", display: "flex", justifyContent: "space-between" }}>
-        <p style={{ fontSize: 10, color: "#444", letterSpacing: 1 }}>© 2026 Unicorn Furniture — First Unicorn Group — Dubai, UAE</p>
-        <p style={{ fontSize: 10, color: "#333", letterSpacing: 1 }}>Curated with precision</p>
-      </div>
-    </footer>
+    </div>
   );
 }
