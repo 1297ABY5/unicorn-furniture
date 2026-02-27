@@ -87,41 +87,139 @@ function getDesc(cat) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════
-// AI FETCH
+// FIRECRAWL SCRAPER — renders JS, bypasses anti-bot, returns clean data
 // ═══════════════════════════════════════════════════════════════════════
 
+const FC_KEY = "fc-5f02ac8881034fc58728ca0ed1dc4734";
+
+function normalizeAliUrl(url) {
+  // Convert ar.aliexpress.com or any regional variant to www
+  return url.replace(/\/\/([\w]+)\.aliexpress\.com/, "//www.aliexpress.com");
+}
+
 async function aiFetch(url) {
-  const resp = await fetch("https://api.anthropic.com/v1/messages", {
+  const cleanUrl = normalizeAliUrl(url.split("?")[0]); // Strip tracking params
+
+  // Step 1: Firecrawl scrapes the page (handles JS rendering + anti-bot)
+  const resp = await fetch("https://api.firecrawl.dev/v2/scrape", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Authorization": `Bearer ${FC_KEY}`,
+      "Content-Type": "application/json",
+    },
     body: JSON.stringify({
-      model: "claude-sonnet-4-5-20250929",
-      max_tokens: 1000,
-      tools: [{ type: "web_search_20250305", name: "web_search" }],
-      messages: [{
-        role: "user",
-        content: `Find this AliExpress product and extract its details: ${url}
-
-Return ONLY valid JSON (no markdown, no backticks, no explanation):
-{"title":"full product title","price_usd":123.45,"image_urls":["url1","url2","url3"],"colors":"Color1, Color2","sizes":"Size1, Size2","orders":150,"rating":"4.8","found":true}
-
-Rules:
-- title: the exact AliExpress product title
-- price_usd: the price in US dollars (convert if needed)
-- image_urls: direct image URLs from the listing (ae01.alicdn.com preferred)
-- If you can't find exact data, estimate from similar products
-- Always set found:true if you found any relevant info`
-      }]
-    })
+      url: cleanUrl,
+      formats: ["markdown", "json"],
+      jsonOptions: {
+        prompt: "Extract the product details from this AliExpress product page.",
+        schema: {
+          type: "object",
+          properties: {
+            title: { type: "string", description: "Full product title" },
+            price_usd: { type: "number", description: "Current sale price in USD. Convert from AED if needed (divide by 3.67)" },
+            original_price_usd: { type: "number", description: "Original price before discount in USD" },
+            image_urls: { type: "array", items: { type: "string" }, description: "All product image URLs (ae01.alicdn.com or ae04.alicdn.com)" },
+            colors: { type: "string", description: "Available color options, comma-separated" },
+            sizes: { type: "string", description: "Available size options, comma-separated" },
+            orders: { type: "number", description: "Number of orders/sold count" },
+            rating: { type: "string", description: "Product rating (e.g. 4.8)" },
+          },
+          required: ["title"],
+        },
+      },
+      timeout: 30000,
+      waitFor: 3000, // Wait 3s for dynamic content to load
+    }),
   });
+
+  if (!resp.ok) {
+    const errText = await resp.text();
+    console.error("Firecrawl error:", resp.status, errText);
+    // Fallback: try markdown-only scrape (costs fewer credits)
+    return await fallbackScrape(cleanUrl);
+  }
+
   const data = await resp.json();
-  const txt = (data.content || []).filter(b => b.type === "text").map(b => b.text).join("\n");
-  try {
-    const clean = txt.replace(/```json|```/g, "").trim();
-    const m = clean.match(/\{[\s\S]*\}/);
-    if (m) return JSON.parse(m[0]);
-  } catch (e) { /* */ }
+
+  // Extract JSON data
+  if (data.success && data.data) {
+    const d = data.data;
+    const jsonData = d.json || {};
+    
+    // Also try to extract images from markdown if json didn't get them
+    let images = jsonData.image_urls || [];
+    if (images.length === 0 && d.markdown) {
+      const imgMatches = d.markdown.match(/https?:\/\/ae0[0-9]\.alicdn\.com[^\s\)\"]+/g) || [];
+      images = [...new Set(imgMatches)].slice(0, 6);
+    }
+    // Also grab images from any img tags in markdown
+    if (images.length === 0 && d.markdown) {
+      const mdImgs = d.markdown.match(/!\[.*?\]\((https?:\/\/[^\)]+)\)/g) || [];
+      images = mdImgs.map(m => m.match(/\((https?:\/\/[^\)]+)\)/)?.[1]).filter(Boolean).slice(0, 6);
+    }
+
+    return {
+      title: jsonData.title || extractTitleFromMarkdown(d.markdown) || "",
+      price_usd: jsonData.price_usd || extractPriceFromMarkdown(d.markdown) || 0,
+      image_urls: images,
+      colors: jsonData.colors || "",
+      sizes: jsonData.sizes || "",
+      orders: jsonData.orders || 0,
+      rating: jsonData.rating || "",
+      found: !!(jsonData.title),
+    };
+  }
+
   return { title: "", price_usd: 0, image_urls: [], colors: "", sizes: "", orders: 0, rating: "", found: false };
+}
+
+// Fallback: markdown-only scrape (1 credit instead of token-based)
+async function fallbackScrape(url) {
+  try {
+    const resp = await fetch("https://api.firecrawl.dev/v2/scrape", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${FC_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ url, formats: ["markdown"], timeout: 30000, waitFor: 3000 }),
+    });
+    if (!resp.ok) return { title: "", price_usd: 0, image_urls: [], colors: "", sizes: "", orders: 0, rating: "", found: false };
+    const data = await resp.json();
+    const md = data.data?.markdown || "";
+    const images = (md.match(/https?:\/\/ae0[0-9]\.alicdn\.com[^\s\)\"]+/g) || []);
+    return {
+      title: extractTitleFromMarkdown(md),
+      price_usd: extractPriceFromMarkdown(md),
+      image_urls: [...new Set(images)].slice(0, 6),
+      colors: "", sizes: "", orders: 0, rating: "",
+      found: true,
+    };
+  } catch { return { title: "", price_usd: 0, image_urls: [], colors: "", sizes: "", orders: 0, rating: "", found: false }; }
+}
+
+function extractTitleFromMarkdown(md) {
+  if (!md) return "";
+  // Try first heading
+  const h1 = md.match(/^#\s+(.+)/m);
+  if (h1) return h1[1].trim();
+  // Try first bold text
+  const bold = md.match(/\*\*(.{10,100})\*\*/);
+  if (bold) return bold[1].trim();
+  // Try first long line
+  const lines = md.split("\n").filter(l => l.trim().length > 20 && l.trim().length < 200);
+  return lines[0]?.trim() || "";
+}
+
+function extractPriceFromMarkdown(md) {
+  if (!md) return 0;
+  // Look for USD price
+  const usd = md.match(/\$\s?(\d+(?:\.\d{2})?)/);
+  if (usd) return parseFloat(usd[1]);
+  // Look for AED price and convert
+  const aed = md.match(/AED\s?(\d[\d,]*(?:\.\d{2})?)/);
+  if (aed) return parseFloat(aed[1].replace(/,/g, "")) / 3.67;
+  return 0;
 }
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -216,6 +314,10 @@ export default function UnicornFurnitureApp() {
   const [importing, setImporting] = useState(false);
   const [importStatus, setImportStatus] = useState("");
   const [lastImported, setLastImported] = useState(null);
+  const [showManual, setShowManual] = useState(false);
+  const [manTitle, setManTitle] = useState("");
+  const [manPrice, setManPrice] = useState("");
+  const [manImage, setManImage] = useState("");
   const [toast, setToast] = useState("");
   const urlRef = useRef(null);
   const scrollRef = useRef(null);
@@ -268,13 +370,13 @@ export default function UnicornFurnitureApp() {
       showToast("Paste an AliExpress product URL"); return;
     }
     setImporting(true);
-    setImportStatus("AI is searching for this product...");
+    setImportStatus("Firecrawl is rendering the page...");
     setLastImported(null);
     try {
       const fetched = await aiFetch(url.trim());
       if (!fetched.title && !fetched.found) {
         setImporting(false); setImportStatus("");
-        showToast("Couldn't find product — try the full URL"); return;
+        showToast("Firecrawl couldn't read this page — use manual fields below"); return;
       }
       setImportStatus("Curating premium listing...");
       await new Promise(r => setTimeout(r, 500));
@@ -327,6 +429,37 @@ export default function UnicornFurnitureApp() {
       setImportStatus("");
       showToast("Error — check URL and try again");
     }
+  }
+
+  async function handleManualImport() {
+    if (!manTitle.trim() || !manPrice.trim()) { showToast("Need at least title and price"); return; }
+    const raw = manTitle.trim();
+    const cost = parseFloat(manPrice);
+    if (isNaN(cost) || cost <= 0) { showToast("Enter a valid USD price"); return; }
+    if (REJECT_KW.some(kw => raw.toLowerCase().includes(kw))) { showToast("Rejected — doesn't meet quality standards"); return; }
+
+    const cat = detectCat(raw);
+    const name = curateName(raw, cat);
+    const pricing = calcPrice(cost, raw);
+    const imgs = manImage.trim() ? [manImage.trim()] : [];
+
+    const product = {
+      id: Date.now().toString(), raw_name: raw, name, category: cat,
+      cost_usd: cost, price_aed: pricing.price, old_price_aed: pricing.old,
+      margin: pricing.margin, profit: pricing.profit,
+      images: imgs, image: imgs[0] || "",
+      colors: "", sizes: "", orders: 0, rating_score: 4.8, reviews: 0,
+      badge: pricing.margin > 65 ? "Best Seller" : cost > 400 ? "Premium" : "New",
+      description: getDesc(cat), ae_url: url.trim() || "",
+      added: new Date().toISOString(),
+    };
+
+    const updated = [...products, product];
+    setProducts(updated);
+    await saveProducts(updated);
+    setLastImported(product);
+    setManTitle(""); setManPrice(""); setManImage(""); setShowManual(false); setUrl("");
+    showToast(`✅ ${name} — now live!`);
   }
 
   async function handleDelete(id) {
@@ -411,6 +544,30 @@ export default function UnicornFurnitureApp() {
             </button>
           </div>
           {importing && importStatus && <p style={{ color: "#c9b99a", fontSize: 13, marginTop: 16, animation: "pulse 1.5s infinite" }}>{importStatus}</p>}
+
+          {/* Manual fallback */}
+          <div style={{ textAlign: "center", marginTop: 20 }}>
+            <button onClick={() => setShowManual(!showManual)} style={{ background: "none", border: "none", fontSize: 11, color: "#444", letterSpacing: 1 }}>
+              {showManual ? "▾ Hide manual fields" : "▸ Manual mode (paste title + price yourself)"}
+            </button>
+          </div>
+
+          {showManual && (
+            <div style={{ maxWidth: 650, margin: "16px auto 0", display: "grid", gap: 12, animation: "fadeIn .2s ease" }}>
+              <input value={manTitle} onChange={e => setManTitle(e.target.value)} placeholder="Product title (copy from AliExpress)" 
+                style={{ width: "100%", padding: "14px 16px", fontSize: 14, background: "#0c0c0c", border: "1px solid #1a1a1a", borderRadius: 8, color: "#e0dcd6", fontFamily: "'Outfit',sans-serif", outline: "none" }} />
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                <input value={manPrice} onChange={e => setManPrice(e.target.value)} placeholder="Price in USD (e.g. 245)" type="number"
+                  style={{ padding: "14px 16px", fontSize: 14, background: "#0c0c0c", border: "1px solid #1a1a1a", borderRadius: 8, color: "#e0dcd6", fontFamily: "'Outfit',sans-serif", outline: "none" }} />
+                <input value={manImage} onChange={e => setManImage(e.target.value)} placeholder="Image URL (right-click → copy image)"
+                  style={{ padding: "14px 16px", fontSize: 14, background: "#0c0c0c", border: "1px solid #1a1a1a", borderRadius: 8, color: "#e0dcd6", fontFamily: "'Outfit',sans-serif", outline: "none" }} />
+              </div>
+              <button onClick={handleManualImport} style={{
+                padding: "14px", fontSize: 11, fontWeight: 600, letterSpacing: 1.5, textTransform: "uppercase",
+                background: "linear-gradient(135deg,#c9b99a,#a08b6c)", color: "#080808", border: "none", borderRadius: 8,
+              }}>Add Manually</button>
+            </div>
+          )}
         </div>
 
         {/* LAST IMPORTED */}
