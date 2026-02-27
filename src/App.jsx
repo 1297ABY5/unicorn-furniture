@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 
 // ═══════════════════════════════════════════════════════════════════════
-// CURATION ENGINE — transforms AliExpress garbage into premium listings
+// CURATION ENGINE — transforms any product listing into premium listings
 // ═══════════════════════════════════════════════════════════════════════
 
 const REJECT_KW = ["cheap","budget","inflatable","pet bed","dog bed","cat bed","gaming chair","massage chair","salon","barber","camping","disposable","cardboard","office chair","student"];
@@ -100,7 +100,7 @@ async function aiFetch(url) {
     body: JSON.stringify({
       url: cleanUrl, formats: ["markdown", "json"], timeout: 30000, waitFor: 3000,
       jsonOptions: {
-        prompt: "Extract the product details from this AliExpress product page.",
+        prompt: "Extract the product details from this furniture/product page.",
         schema: {
           type: "object",
           properties: {
@@ -242,8 +242,8 @@ export default function UnicornFurnitureApp() {
   // ── IMPORT ──
   async function handleImport() {
     if (!url.trim() || importing) return;
-    if (!url.includes("aliexpress") && !url.includes("ali.express") && !url.includes("a]i")) {
-      showToast("Paste an AliExpress product URL"); return;
+    if (!url.startsWith("http")) {
+      showToast("Paste a valid product URL"); return;
     }
     setImporting(true);
     setImportStatus("Firecrawl is rendering the page...");
@@ -392,10 +392,10 @@ export default function UnicornFurnitureApp() {
         {/* URL INPUT */}
         <div style={{ textAlign: "center", marginBottom: 48 }}>
           <h2 style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 34, fontWeight: 300, color: "#c9b99a", marginBottom: 8 }}>Paste. Done.</h2>
-          <p style={{ color: "#444", fontSize: 13, marginBottom: 32 }}>Paste any AliExpress URL. AI fetches, curates, and publishes to your live store.</p>
+          <p style={{ color: "#444", fontSize: 13, marginBottom: 32 }}>Paste any product URL — AliExpress, Alibaba, 1688, Wayfair, anywhere. AI scrapes, curates, and publishes.</p>
           <div style={{ position: "relative", maxWidth: 650, margin: "0 auto" }}>
             <input ref={urlRef} value={url} onChange={e => setUrl(e.target.value)} onKeyDown={e => e.key === "Enter" && handleImport()}
-              placeholder="https://www.aliexpress.com/item/1005007..." disabled={importing}
+              placeholder="https://www.aliexpress.com/item/... or any product URL" disabled={importing}
               style={{ width: "100%", padding: "20px 130px 20px 20px", fontSize: 15, background: "#0c0c0c", border: `1px solid ${importing ? "#c9b99a33" : "#1a1a1a"}`, borderRadius: 12, color: "#e0dcd6", fontFamily: "'Outfit',sans-serif", outline: "none" }} />
             <button onClick={handleImport} disabled={importing || !url.trim()}
               style={{ position: "absolute", right: 6, top: 6, bottom: 6, padding: "0 24px", fontSize: 11, fontWeight: 600, letterSpacing: 1.5, textTransform: "uppercase",
@@ -412,7 +412,7 @@ export default function UnicornFurnitureApp() {
           </div>
           {showManual && (
             <div style={{ maxWidth: 650, margin: "12px auto 0", display: "grid", gap: 10 }}>
-              <input value={manTitle} onChange={e => setManTitle(e.target.value)} placeholder="Product title (copy from AliExpress)"
+              <input value={manTitle} onChange={e => setManTitle(e.target.value)} placeholder="Product title (copy from any site)"
                 style={{ width: "100%", padding: "12px 14px", fontSize: 13, background: "#0c0c0c", border: "1px solid #1a1a1a", borderRadius: 8, color: "#e0dcd6", fontFamily: "'Outfit',sans-serif", outline: "none" }} />
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
                 <input value={manPrice} onChange={e => setManPrice(e.target.value)} placeholder="Price USD (e.g. 245)" type="number"
@@ -432,7 +432,7 @@ export default function UnicornFurnitureApp() {
           <div style={{ animation: "slideUp .4s ease", marginBottom: 48 }}>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", border: "1px solid #1a1a1a", borderRadius: 14, overflow: "hidden" }}>
               <div style={{ background: "#0a0a0a", padding: 28, borderRight: "1px solid #141414" }}>
-                <p style={{ fontSize: 9, color: "#ef4444", letterSpacing: 3, textTransform: "uppercase", marginBottom: 14 }}>AliExpress Raw</p>
+                <p style={{ fontSize: 9, color: "#ef4444", letterSpacing: 3, textTransform: "uppercase", marginBottom: 14 }}>Source Raw</p>
                 <p style={{ fontSize: 13, color: "#555", lineHeight: 1.6, marginBottom: 16 }}>{lastImported.raw_name}</p>
                 {lastImported.cost_usd > 0 && <p style={{ fontSize: 22, color: "#555" }}>${lastImported.cost_usd}</p>}
               </div>
