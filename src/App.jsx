@@ -94,45 +94,101 @@ const FC_KEY = "fc-5f02ac8881034fc58728ca0ed1dc4734";
 
 async function aiFetch(url) {
   const cleanUrl = url.replace(/\/\/([\w]+)\.aliexpress\.com/, "//www.aliexpress.com").split("?")[0];
-  const resp = await fetch("https://api.firecrawl.dev/v2/scrape", {
-    method: "POST",
-    headers: { "Authorization": `Bearer ${FC_KEY}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      url: cleanUrl, formats: ["markdown", "json"], timeout: 30000, waitFor: 3000,
-      jsonOptions: {
-        prompt: "Extract the product details from this furniture/product page.",
-        schema: {
-          type: "object",
-          properties: {
-            title: { type: "string", description: "Full product title" },
-            price_usd: { type: "number", description: "Current sale price in USD. Convert from AED if needed (divide by 3.67)" },
-            image_urls: { type: "array", items: { type: "string" }, description: "All product image URLs" },
-            colors: { type: "string", description: "Available color options, comma-separated" },
-            sizes: { type: "string", description: "Available size options, comma-separated" },
-            orders: { type: "number", description: "Number of orders/sold" },
-            rating: { type: "string", description: "Product rating" },
-          }, required: ["title"],
+  try {
+    const resp = await fetch("https://api.firecrawl.dev/v2/scrape", {
+      method: "POST",
+      headers: { "Authorization": `Bearer ${FC_KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        url: cleanUrl, formats: ["markdown", "json", "rawHtml"], timeout: 30000, waitFor: 5000,
+        jsonOptions: {
+          prompt: "Extract the product details from this product page.",
+          schema: {
+            type: "object",
+            properties: {
+              title: { type: "string", description: "Full product title" },
+              price_usd: { type: "number", description: "Current sale price in USD. Convert from AED if needed (divide by 3.67)" },
+              image_urls: { type: "array", items: { type: "string" }, description: "All product image URLs (full https URLs)" },
+              colors: { type: "string", description: "Available color options, comma-separated" },
+              sizes: { type: "string", description: "Available size options, comma-separated" },
+              orders: { type: "number", description: "Number of orders/sold" },
+              rating: { type: "string", description: "Product rating" },
+            }, required: ["title"],
+          },
         },
-      },
-    }),
-  });
-  if (!resp.ok) return await fcFallback(cleanUrl);
-  const data = await resp.json();
-  if (data.success && data.data) {
-    const d = data.data, j = d.json || {};
-    let imgs = j.image_urls || [];
-    if (!imgs.length && d.markdown) imgs = [...new Set((d.markdown.match(/https?:\/\/ae0[0-9]\.alicdn\.com[^\s\)\"]+/g)||[]))].slice(0,6);
-    if (!imgs.length && d.markdown) imgs = (d.markdown.match(/!\[.*?\]\((https?:\/\/[^\)]+)\)/g)||[]).map(m=>m.match(/\((https?:\/\/[^\)]+)\)/)?.[1]).filter(Boolean).slice(0,6);
-    return { title: j.title||xTitle(d.markdown)||"", price_usd: j.price_usd||xPrice(d.markdown)||0, image_urls: imgs, colors: j.colors||"", sizes: j.sizes||"", orders: j.orders||0, rating: j.rating||"", found: !!(j.title) };
-  }
-  return { title:"", price_usd:0, image_urls:[], colors:"", sizes:"", orders:0, rating:"", found:false };
+      }),
+    });
+    if (!resp.ok) { console.log("Firecrawl HTTP error:", resp.status); return await fcFallback(cleanUrl); }
+    const data = await resp.json();
+    console.log("Firecrawl response keys:", Object.keys(data.data || {}));
+    if (data.success && data.data) {
+      const d = data.data, j = d.json || {}, md = d.markdown || "", html = d.rawHtml || "";
+      let imgs = (j.image_urls || []).filter(u => u && u.startsWith("http"));
+      console.log("JSON image_urls:", imgs.length);
+
+      if (imgs.length < 2) {
+        // Extract from HTML <img> tags — most reliable for lazy-loaded sites
+        const htmlImgs = [];
+        const imgRegex = /<img[^>]+(?:src|data-src|data-lazy-src)=["']?(https?:\/\/[^"'\s>]+)["']?/gi;
+        let m; while ((m = imgRegex.exec(html)) !== null) htmlImgs.push(m[1]);
+        console.log("HTML img tags found:", htmlImgs.length);
+
+        // Extract from markdown ![](url) 
+        const mdImgs = (md.match(/!\[.*?\]\((https?:\/\/[^\s\)\"]+)\)/g) || [])
+          .map(m2 => m2.match(/\((https?:\/\/[^\s\)\"]+)\)/)?.[1]).filter(Boolean);
+
+        // Extract raw image URLs from markdown text
+        const rawImgs = (md.match(/https?:\/\/[^\s\)\"<>\]]+\.(?:jpg|jpeg|png|webp)(?:[^\s\)\"<>\]]*)/gi) || []);
+
+        // AliExpress CDN specifically (alicdn.com)
+        const aliImgs = (html.match(/https?:\/\/[a-z0-9-]+\.alicdn\.com\/[^\s"'<>]+/gi) || []);
+        
+        // Also check for background-image URLs in style attributes  
+        const bgImgs = (html.match(/background-image:\s*url\(["']?(https?:\/\/[^"'\)]+)["']?\)/gi) || [])
+          .map(m2 => m2.match(/url\(["']?(https?:\/\/[^"'\)]+)/)?.[1]).filter(Boolean);
+
+        console.log("Sources — ali:", aliImgs.length, "htmlImg:", htmlImgs.length, "md:", mdImgs.length, "raw:", rawImgs.length, "bg:", bgImgs.length);
+
+        // Merge all, prioritise alicdn, then html imgs, then rest
+        const allImgs = [...aliImgs, ...htmlImgs, ...mdImgs, ...rawImgs, ...bgImgs];
+        const seen = new Set();
+        const filtered = allImgs.filter(u => {
+          // Clean URL for dedup
+          const base = u.split("?")[0].split("#")[0];
+          if (seen.has(base)) return false;
+          seen.add(base);
+          // Skip non-product images
+          if (/favicon|logo|icon|sprite|avatar|pixel|tracking|badge|flag|banner|ad-|\.gif|1x1|placeholder|loading/i.test(u)) return false;
+          // Skip tiny images (common URL patterns for thumbnails)
+          if (/[_-](?:50|32|16|24)x(?:50|32|16|24)/i.test(u)) return false;
+          // Must be actual image format or alicdn
+          if (/alicdn\.com/i.test(u)) return true;
+          if (/\.(jpg|jpeg|png|webp)/i.test(u)) return true;
+          return false;
+        });
+        if (filtered.length > imgs.length) imgs = filtered.slice(0, 8);
+        console.log("Final images after extraction:", imgs.length, imgs.slice(0, 2));
+      }
+
+      return { title: j.title||xTitle(md)||"", price_usd: j.price_usd||xPrice(md)||0, image_urls: imgs, colors: j.colors||"", sizes: j.sizes||"", orders: j.orders||0, rating: j.rating||"", found: !!(j.title||xTitle(md)) };
+    }
+    return { title:"", price_usd:0, image_urls:[], colors:"", sizes:"", orders:0, rating:"", found:false };
+  } catch(e) { console.error("aiFetch error:", e); return await fcFallback(cleanUrl); }
+}
 }
 async function fcFallback(url) {
   try {
-    const r = await fetch("https://api.firecrawl.dev/v2/scrape", { method:"POST", headers:{"Authorization":`Bearer ${FC_KEY}`,"Content-Type":"application/json"}, body:JSON.stringify({url,formats:["markdown"],timeout:30000,waitFor:3000}) });
+    const r = await fetch("https://api.firecrawl.dev/v2/scrape", { method:"POST", headers:{"Authorization":`Bearer ${FC_KEY}`,"Content-Type":"application/json"}, body:JSON.stringify({url,formats:["markdown","rawHtml"],timeout:30000,waitFor:5000}) });
     if (!r.ok) return {title:"",price_usd:0,image_urls:[],colors:"",sizes:"",orders:0,rating:"",found:false};
-    const md = (await r.json()).data?.markdown||"";
-    return { title:xTitle(md), price_usd:xPrice(md), image_urls:[...new Set((md.match(/https?:\/\/ae0[0-9]\.alicdn\.com[^\s\)\"]+/g)||[]))].slice(0,6), colors:"",sizes:"",orders:0,rating:"",found:true };
+    const d = (await r.json()).data||{};
+    const md = d.markdown||"", html = d.rawHtml||"";
+    // Extract images from HTML
+    const imgs = [];
+    const imgRx = /<img[^>]+(?:src|data-src|data-lazy-src)=["']?(https?:\/\/[^"'\s>]+)["']?/gi;
+    let m; while ((m = imgRx.exec(html)) !== null) imgs.push(m[1]);
+    const aliImgs = (html.match(/https?:\/\/[a-z0-9-]+\.alicdn\.com\/[^\s"'<>]+/gi) || []);
+    const all = [...new Set([...aliImgs, ...imgs])].filter(u => !/favicon|logo|icon|sprite|pixel|\.gif|1x1/i.test(u)).slice(0,8);
+    console.log("Fallback images:", all.length);
+    return { title:xTitle(md), price_usd:xPrice(md), image_urls:all, colors:"",sizes:"",orders:0,rating:"",found:true };
   } catch { return {title:"",price_usd:0,image_urls:[],colors:"",sizes:"",orders:0,rating:"",found:false}; }
 }
 function xTitle(md) { if(!md)return""; const h=md.match(/^#\s+(.+)/m); if(h)return h[1].trim(); const b=md.match(/\*\*(.{10,100})\*\*/); if(b)return b[1].trim(); return md.split("\n").filter(l=>l.trim().length>20&&l.trim().length<200)[0]?.trim()||""; }
@@ -254,7 +310,7 @@ export default function UnicornFurnitureApp() {
         setImporting(false); setImportStatus("");
         showToast("Couldn't scrape — use manual mode below"); setShowManual(true); return;
       }
-      setImportStatus("Curating premium listing...");
+      setImportStatus(`Found ${(fetched.image_urls||[]).length} images — curating premium listing...`);
       await new Promise(r => setTimeout(r, 500));
 
       const raw = fetched.title || "Luxury Furniture Piece";
