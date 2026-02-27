@@ -174,7 +174,6 @@ async function aiFetch(url) {
     return { title:"", price_usd:0, image_urls:[], colors:"", sizes:"", orders:0, rating:"", found:false };
   } catch(e) { console.error("aiFetch error:", e); return await fcFallback(cleanUrl); }
 }
-}
 async function fcFallback(url) {
   try {
     const r = await fetch("https://api.firecrawl.dev/v2/scrape", { method:"POST", headers:{"Authorization":`Bearer ${FC_KEY}`,"Content-Type":"application/json"}, body:JSON.stringify({url,formats:["markdown","rawHtml"],timeout:30000,waitFor:5000}) });
