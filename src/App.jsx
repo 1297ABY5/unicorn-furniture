@@ -130,17 +130,64 @@ Rules:
 
 const STORAGE_KEY = "unicorn-products";
 
+// ── DEFAULT PRODUCTS (added via chat by Atlas) ──
+const DEFAULT_PRODUCTS = [
+  {
+    id: "prod_001",
+    raw_name: "Modern Wood Leg Square Coffee Table Sets Home Center Table with Storage Drawers Compact Coffee Tables Furniture for Living Room",
+    name: "Infinity Sintered Stone Coffee Table Set",
+    category: "tables",
+    cost_usd: 2325,
+    price_aed: 18999,
+    old_price_aed: 23699,
+    margin: 55,
+    profit: 10466,
+    images: [
+      "/products/infinity-coffee-table.png",
+    ],
+    image: "/products/infinity-coffee-table.png",
+    colors: "White Marble + Black Marble, Full White Marble",
+    sizes: "80×80cm Set, 70×70cm Single",
+    orders: 47,
+    rating_score: 4.8,
+    reviews: 12,
+    badge: "New",
+    description: "A nesting duo of sintered stone coffee tables with concealed storage drawers and solid walnut legs. The white and black marble tops complement each other — functional art for your living room.",
+    ae_url: "https://www.aliexpress.com/item/1005011685240962.html",
+    added: "2026-02-28T12:00:00Z",
+  },
+];
+
 async function loadProducts() {
   try {
-    const r = await window.storage.get(STORAGE_KEY);
-    return r ? JSON.parse(r.value) : [];
-  } catch { return []; }
+    if (typeof window !== "undefined" && window.storage) {
+      const r = await window.storage.get(STORAGE_KEY);
+      if (r) {
+        const stored = JSON.parse(r.value);
+        if (stored.length > 0) return stored;
+      }
+    }
+  } catch { /* fall through */ }
+  // Return defaults + any localStorage fallback
+  try {
+    const local = localStorage.getItem(STORAGE_KEY);
+    if (local) {
+      const parsed = JSON.parse(local);
+      if (parsed.length > 0) return parsed;
+    }
+  } catch { /* fall through */ }
+  return [...DEFAULT_PRODUCTS];
 }
 
 async function saveProducts(products) {
   try {
-    await window.storage.set(STORAGE_KEY, JSON.stringify(products));
-  } catch (e) { console.error("Storage save failed:", e); }
+    if (typeof window !== "undefined" && window.storage) {
+      await window.storage.set(STORAGE_KEY, JSON.stringify(products));
+    }
+  } catch { /* silent */ }
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(products));
+  } catch { /* silent */ }
 }
 
 // ═══════════════════════════════════════════════════════════════════════
